@@ -24,12 +24,24 @@ year_min, year_max = st.sidebar.select_slider(
 
 df_f = df[(df["Year"] >= year_min) & (df["Year"] <= year_max)].copy()
 
+
 countries = sorted(df_f["Country name"].unique())
 selected_countries = st.sidebar.multiselect(
     "Select countries (optional)",
     options=countries,
     default=[]
 )
+
+st.sidebar.header("Chart settings")
+
+top_n = st.sidebar.slider("Top N (rankings)", min_value=5, max_value=30, value=15, step=5)
+change_n = st.sidebar.slider("Top N (changes 2019→2024)", min_value=5, max_value=30, value=15, step=5)
+
+# Para gráficos que comparan países en líneas (evitar spaghetti)
+max_countries = st.sidebar.slider("Max countries to show (line charts)", 3, 15, 8, 1)
+if len(selected_countries) > max_countries:
+    st.sidebar.warning(f"Too many countries selected. Showing first {max_countries}.")
+    selected_countries = selected_countries[:max_countries]
 
 # ----- KPI row -----
 col1, col2, col3 = st.columns(3)
