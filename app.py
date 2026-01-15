@@ -166,3 +166,111 @@ with tab3:
 
     fig3.update_layout(template="plotly_white", xaxis_title="Life evaluation", yaxis_title="Country")
     st.plotly_chart(fig3, use_container_width=True)
+
+
+with tab4:
+    st.subheader("Drivers of happiness (GDP, social support, and factor strength)")
+
+    # Country-level averages (robusto y consistente con tu análisis)
+    country_level = (
+        df_f.groupby("Country name", as_index=False)
+            .agg({
+                "Life evaluation (3-year average)": "mean",
+                "Explained by: Log GDP per capita": "mean",
+                "Explained by: Social support": "mean"
+            })
+            .rename(columns={
+                "Life evaluation (3-year average)": "life_eval",
+                "Explained by: Log GDP per capita": "avg_log_gdp",
+                "Explained by: Social support": "avg_social_support"
+            })
+    )
+
+    # --- P4 (mejor versión): 1 punto = 1 país, GDP vs life_eval ---
+    st.markdown("**P4. Relationship: GDP per capita vs Life Evaluation (country averages)**")
+    fig4 = px.scatter(
+        country_level,
+        x="avg_log_gdp",
+        y="life_eval",
+        trendline="ols",
+        hover_name="Country name",
+        opacity=0.7,
+        title="GDP per capita vs Life Evaluation (Country Averages)",
+        labels={"avg_log_gdp": "Avg Log GDP per capita", "life_eval": "Avg Life evaluation"}
+    )
+    fig4.update_layout(template="plotly_white")
+    st.plotly_chart(fig4, use_container_width=True)
+
+    # --- P6: comparación en un solo gráfico (facets) ---
+    st.markdown("**P6. Compare correlations: GDP vs Social Support (faceted)**")
+    long_df = country_level.melt(
+        id_vars=["Country name", "life_eval"],
+        value_vars=["avg_log_gdp", "avg_social_support"],
+        var_name="Factor",
+        value_name="Factor value"
+    )
+    long_df["Factor"] = long_df["Factor"].replace({
+        "avg_log_gdp": "Log GDP per capita",
+        "avg_social_support": "Social support"
+    })
+
+    fig6 = px.scatter(
+        long_df,
+        x="Factor value",
+        y="life_eval",
+        facet_col="Factor",
+        trendline="ols",
+        hover_name="Country name",
+        opacity=0.7,
+        title="Life Evaluation vs Key Factors (Country Averages)",
+        labels={"life_eval": "Avg Life evaluation", "Factor value": "Factor value"}
+    )
+    fig6.update_layout(template="plotly_white")
+    st.plotly_chart(fig6, use_container_width=True)
+
+    st.markdown("**P5. Which factor correlates most with life evaluation?**")
+
+    # Construir country_level completo de factores
+    factors_full = [
+        "Explained by: Log GDP per capita",
+        "Explained by: Social support",
+        "Explained by: Healthy life expectancy",
+        "Explained by: Freedom to make life choices",
+        "Explained by: Generosity",
+        "Explained by: Perceptions of corruption"
+    ]
+
+    country_full = (
+        df_f.groupby("Country name", as_index=False)
+            .agg({**{"Life evaluation (3-year average)": "mean"}, **{c: "mean" for c in factors_full}})
+            .rename(columns={"Life evaluation (3-year average)": "life_eval"})
+    )
+
+    corr = (
+        country_full[factors_full + ["life_eval"]]
+            .corr(numeric_only=True)["life_eval"]
+            .drop("life_eval")
+            .sort_values(ascending=False)
+            .reset_index()
+            .rename(columns={"index": "Factor", "life_eval": "Correlation"})
+    )
+
+    corr["Factor"] = corr["Factor"].replace({
+        "Explained by: Log GDP per capita": "GDP per capita",
+        "Explained by: Social support": "Social support",
+        "Explained by: Healthy life expectancy": "Healthy life expectancy",
+        "Explained by: Freedom to make life choices": "Freedom",
+        "Explained by: Generosity": "Generosity",
+        "Explained by: Perceptions of corruption": "Corruption"
+    })
+
+    fig5 = px.bar(
+        corr,
+        x="Correlation",
+        y="Factor",
+        orientation="h",
+        title="Correlation with Life Evaluation (Country Averages)",
+        labels={"Correlation": "Pearson correlation", "Factor": "Factor"}
+    )
+    fig5.update_layout(template="plotly_white", yaxis=dict(categoryorder="total ascending"))
+    st.plotly_chart(fig5, use_container_width=True)
