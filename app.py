@@ -125,3 +125,44 @@ with tab2:
     fig2.update_layout(template="plotly_white", yaxis=dict(categoryorder="total ascending"))
     st.plotly_chart(fig2, use_container_width=True)
 
+with tab3:
+    st.subheader("P3. Biggest changes from 2019 to 2024 (increase vs decrease)")
+
+    df_2019 = df_f[df_f["Year"] == 2019][["Country name", "Life evaluation (3-year average)"]]
+    df_2024 = df_f[df_f["Year"] == 2024][["Country name", "Life evaluation (3-year average)"]]
+
+    change_df = df_2019.merge(df_2024, on="Country name", suffixes=("_2019", "_2024"))
+    change_df["change"] = change_df["Life evaluation (3-year average)_2024"] - change_df["Life evaluation (3-year average)_2019"]
+
+    inc = change_df.sort_values("change", ascending=False).head(change_n).copy()
+    dec = change_df.sort_values("change", ascending=True).head(change_n).copy()
+    plot_change = pd.concat([inc, dec], ignore_index=True)
+
+    # Dumbbell (scatter 2019 + scatter 2024 + line shapes)
+    fig3 = px.scatter(
+        plot_change,
+        y="Country name",
+        x="Life evaluation (3-year average)_2019",
+        title=f"Changes in Life Evaluation (2019 → 2024): Top {change_n} increases & decreases",
+        labels={"Life evaluation (3-year average)_2019": "Life evaluation"}
+    )
+
+    fig3.add_scatter(
+        y=plot_change["Country name"],
+        x=plot_change["Life evaluation (3-year average)_2024"],
+        mode="markers",
+        name="2024"
+    )
+
+    for _, row in plot_change.iterrows():
+        fig3.add_shape(
+            type="line",
+            x0=row["Life evaluation (3-year average)_2019"],
+            x1=row["Life evaluation (3-year average)_2024"],
+            y0=row["Country name"],
+            y1=row["Country name"],
+            line=dict(width=2)
+        )
+
+    fig3.update_layout(template="plotly_white", xaxis_title="Life evaluation", yaxis_title="Country")
+    st.plotly_chart(fig3, use_container_width=True)
