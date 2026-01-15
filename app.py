@@ -40,7 +40,7 @@ col3.metric("Rows", len(df_f))
 st.divider()
 
 # ----- Chart 1: Global + selected countries -----
-st.subheader("Life Evaluation Over Time")
+st.subheader("Life evaluation over time")
 
 global_series = (
     df_f.groupby("Year", as_index=False)["Life evaluation (3-year average)"]
@@ -65,7 +65,7 @@ fig1 = px.line(
     y="life_eval",
     color="Country name",
     markers=True,
-    title="Global average (always) + selected countries",
+    title="Global average + selected countries",
     labels={"life_eval": "Life evaluation (3-year average)", "Country name": "Series"},
 )
 
@@ -86,7 +86,7 @@ st.plotly_chart(fig1, use_container_width=True)
 st.divider()
 
 # ----- Chart 2: Map (country averages) -----
-st.subheader("Map: Average Life Evaluation (selected years)")
+st.subheader("Map: Average life evaluation")
 
 map_df = (
     df_f.groupby("Country name", as_index=False)["Life evaluation (3-year average)"]
@@ -100,7 +100,7 @@ fig2 = px.choropleth(
     locationmode="country names",
     color="avg_life_eval",
     color_continuous_scale="Turbo",
-    title="Global Distribution of Life Evaluation",
+    title="Global distribution of life evaluation",
     labels={"avg_life_eval": "Average life evaluation"}
 )
 
