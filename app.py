@@ -96,40 +96,32 @@ with tab1:
     st.plotly_chart(fig1, use_container_width=True)
 
 
-# ----- Chart 2: Map (country averages) -----
-st.subheader("Map: Average life evaluation")
+with tab2:
+    st.subheader("P2. Differences between countries (Top vs Bottom)")
 
-map_df = (
-    df_f.groupby("Country name", as_index=False)["Life evaluation (3-year average)"]
-        .mean()
-        .rename(columns={"Life evaluation (3-year average)": "avg_life_eval"})
-)
-
-fig2 = px.choropleth(
-    map_df,
-    locations="Country name",
-    locationmode="country names",
-    color="avg_life_eval",
-    color_continuous_scale="Turbo",
-    title="Global distribution of life evaluation",
-    labels={"avg_life_eval": "Average life evaluation"}
-)
-
-vmin = float(map_df["avg_life_eval"].min())
-vmax = float(map_df["avg_life_eval"].max())
-tickvals = [round(vmin + i*(vmax-vmin)/4, 1) for i in range(5)]
-
-fig2.update_coloraxes(
-    cmin=vmin, cmax=vmax,
-    colorbar=dict(
-        title="Average life evaluation<br>(2019–2024)",
-        tickmode="array",
-        tickvals=tickvals,
-        ticks="outside",
-        len=0.6
+    country_avg = (
+        df_f.groupby("Country name", as_index=False)["Life evaluation (3-year average)"]
+            .mean()
+            .rename(columns={"Life evaluation (3-year average)": "avg_life_eval"})
+            .sort_values("avg_life_eval", ascending=False)
     )
-)
 
-fig2.update_layout(template="simple_white", margin=dict(l=0, r=0, t=50, b=0))
-st.plotly_chart(fig2, use_container_width=True)
+    top_countries = country_avg.head(top_n).copy()
+    bottom_countries = country_avg.tail(top_n).copy()
+    top_countries["Group"] = "Top countries"
+    bottom_countries["Group"] = "Bottom countries"
+    plot_rank = pd.concat([top_countries, bottom_countries], ignore_index=True)
+
+    fig2 = px.bar(
+        plot_rank,
+        x="avg_life_eval",
+        y="Country name",
+        color="Group",
+        orientation="h",
+        title=f"Top and Bottom {top_n} Countries by Average Life Evaluation",
+        labels={"avg_life_eval": "Average life evaluation", "Country name": "Country"}
+    )
+
+    fig2.update_layout(template="plotly_white", yaxis=dict(categoryorder="total ascending"))
+    st.plotly_chart(fig2, use_container_width=True)
 
