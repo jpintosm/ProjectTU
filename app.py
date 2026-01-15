@@ -51,51 +51,50 @@ col3.metric("Rows", len(df_f))
 
 st.divider()
 
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+    "Overview", "Rankings", "Changes", "Drivers", "Groups", "Map"
+])
+
 # ----- Chart 1: Global + selected countries -----
-st.subheader("Life evaluation over time")
+with tab1:
+    st.subheader("P1. Global trend of life evaluation (with optional country comparison)")
 
-global_series = (
-    df_f.groupby("Year", as_index=False)["Life evaluation (3-year average)"]
-        .mean()
-        .assign(**{"Country name": "Global average"})
-        .rename(columns={"Life evaluation (3-year average)": "life_eval"})
-)
-
-if selected_countries:
-    country_series = (
-        df_f[df_f["Country name"].isin(selected_countries)]
-          [["Year", "Country name", "Life evaluation (3-year average)"]]
-          .rename(columns={"Life evaluation (3-year average)": "life_eval"})
+    global_series = (
+        df_f.groupby("Year", as_index=False)["Life evaluation (3-year average)"]
+            .mean()
+            .assign(**{"Country name": "Global average"})
+            .rename(columns={"Life evaluation (3-year average)": "life_eval"})
     )
-    plot_df = pd.concat([global_series, country_series], ignore_index=True)
-else:
-    plot_df = global_series.copy()
 
-fig1 = px.line(
-    plot_df,
-    x="Year",
-    y="life_eval",
-    color="Country name",
-    markers=True,
-    title="Global average + selected countries",
-    labels={"life_eval": "Life evaluation (3-year average)", "Country name": "Series"},
-)
+    if selected_countries:
+        country_series = (
+            df_f[df_f["Country name"].isin(selected_countries)]
+              [["Year", "Country name", "Life evaluation (3-year average)"]]
+              .rename(columns={"Life evaluation (3-year average)": "life_eval"})
+        )
+        plot_df = pd.concat([global_series, country_series], ignore_index=True)
+    else:
+        plot_df = global_series.copy()
 
-# Ocultar países por defecto si no hay selección (solo global visible)
-if not selected_countries:
-    for tr in fig1.data:
-        if tr.name != "Global average":
-            tr.visible = "legendonly"
+    fig1 = px.line(
+        plot_df, x="Year", y="life_eval", color="Country name", markers=True,
+        title="Life Evaluation Over Time (Global + Selected Countries)",
+        labels={"life_eval": "Life evaluation (3-year average)", "Country name": "Series"}
+    )
 
-fig1.update_layout(
-    hovermode="x unified",
-    xaxis=dict(tickmode="linear", dtick=1, rangeslider=dict(visible=True)),
-    template="plotly_white"
-)
+    # Solo global visible si no seleccionas países
+    if not selected_countries:
+        for tr in fig1.data:
+            if tr.name != "Global average":
+                tr.visible = "legendonly"
 
-st.plotly_chart(fig1, use_container_width=True)
+    fig1.update_layout(
+        hovermode="x unified",
+        xaxis=dict(tickmode="linear", dtick=1, rangeslider=dict(visible=True)),
+        template="plotly_white"
+    )
+    st.plotly_chart(fig1, use_container_width=True)
 
-st.divider()
 
 # ----- Chart 2: Map (country averages) -----
 st.subheader("Map: Average life evaluation")
