@@ -502,3 +502,52 @@ with tab5:
         fig9.update_layout(template="plotly_white", legend_title_text="Factor")
         st.plotly_chart(fig9, use_container_width=True)
 
+with tab6:
+    st.subheader("Map")
+
+    # Promedio por país dentro del rango seleccionado
+    map_df = (
+        df_f.groupby("Country name", as_index=False)["Life evaluation (3-year average)"]
+            .mean()
+            .rename(columns={"Life evaluation (3-year average)": "avg_life_eval"})
+    )
+
+    map_df["avg_life_eval"] = pd.to_numeric(map_df["avg_life_eval"], errors="coerce")
+    map_df = map_df.dropna(subset=["avg_life_eval"])
+
+    if map_df.empty:
+        st.warning("No data available for the map with the current filters.")
+        st.stop()
+
+    figm = px.choropleth(
+        map_df,
+        locations="Country name",
+        locationmode="country names",
+        color="avg_life_eval",
+        color_continuous_scale="Turbo",  # llamativo
+        title="Global Distribution of Life Evaluation (selected years)",
+        labels={"avg_life_eval": "Average life evaluation"}
+    )
+
+    vmin = float(map_df["avg_life_eval"].min())
+    vmax = float(map_df["avg_life_eval"].max())
+    tickvals = [round(vmin + i*(vmax - vmin)/4, 1) for i in range(5)]
+
+    figm.update_coloraxes(
+        cmin=vmin, cmax=vmax,
+        colorbar=dict(
+            title="Average life evaluation<br>(selected years)",
+            tickmode="array",
+            tickvals=tickvals,
+            ticks="outside",
+            len=0.6
+        )
+    )
+
+    figm.update_layout(
+        template="simple_white",
+        margin=dict(l=0, r=0, t=50, b=0)
+    )
+
+    st.plotly_chart(figm, use_container_width=True)
+
