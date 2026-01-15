@@ -128,23 +128,38 @@ with tab2:
 with tab3:
     st.subheader("P3. Biggest changes from 2019 to 2024 (increase vs decrease)")
 
+    # Verificar que existan ambos años en el df filtrado
+    years_available = set(df_f["Year"].unique())
+    if 2019 not in years_available or 2024 not in years_available:
+        st.warning("To compute changes (2019 → 2024), please include both years in the Year range filter.")
+        st.stop()
+
     df_2019 = df_f[df_f["Year"] == 2019][["Country name", "Life evaluation (3-year average)"]]
     df_2024 = df_f[df_f["Year"] == 2024][["Country name", "Life evaluation (3-year average)"]]
 
     change_df = df_2019.merge(df_2024, on="Country name", suffixes=("_2019", "_2024"))
-    change_df["change"] = change_df["Life evaluation (3-year average)_2024"] - change_df["Life evaluation (3-year average)_2019"]
+
+    # Seguridad extra: si por alguna razón quedara vacío
+    if change_df.empty:
+        st.warning("No matching countries found between 2019 and 2024 within the current filters.")
+        st.stop()
+
+    change_df["change"] = (
+        change_df["Life evaluation (3-year average)_2024"]
+        - change_df["Life evaluation (3-year average)_2019"]
+    )
 
     inc = change_df.sort_values("change", ascending=False).head(change_n).copy()
     dec = change_df.sort_values("change", ascending=True).head(change_n).copy()
     plot_change = pd.concat([inc, dec], ignore_index=True)
 
-    # Dumbbell (scatter 2019 + scatter 2024 + line shapes)
+    # Dumbbell plot
     fig3 = px.scatter(
         plot_change,
         y="Country name",
         x="Life evaluation (3-year average)_2019",
         title=f"Changes in Life Evaluation (2019 → 2024): Top {change_n} increases & decreases",
-        labels={"Life evaluation (3-year average)_2019": "Life evaluation"}
+        labels={"Life evaluation (3-year average)_2019": "Life evaluation"},
     )
 
     fig3.add_scatter(
@@ -154,6 +169,7 @@ with tab3:
         name="2024"
     )
 
+    # Shapes: líneas entre 2019 y 2024
     for _, row in plot_change.iterrows():
         fig3.add_shape(
             type="line",
