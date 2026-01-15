@@ -318,3 +318,187 @@ with tab4:
 
     st.caption("Note: Correlation indicates association, not causation.")
 
+
+with tab5:
+    st.subheader("Groups & profiles")
+
+    # =========================
+    # P7: High life evaluation despite low GDP (bar)
+    # =========================
+    st.markdown("### P7. High life evaluation despite low GDP (country averages)")
+
+    # Country-level averages for life_eval and GDP
+    cl7 = (
+        df_f.groupby("Country name", as_index=False)
+            .agg({
+                "Life evaluation (3-year average)": "mean",
+                "Explained by: Log GDP per capita": "mean"
+            })
+            .rename(columns={
+                "Life evaluation (3-year average)": "life_eval",
+                "Explained by: Log GDP per capita": "gdp"
+            })
+    )
+
+    cl7["life_eval"] = pd.to_numeric(cl7["life_eval"], errors="coerce")
+    cl7["gdp"] = pd.to_numeric(cl7["gdp"], errors="coerce")
+    cl7 = cl7.dropna(subset=["life_eval", "gdp"])
+
+    if cl7.empty:
+        st.warning("No data available for P7 with the current filters.")
+    else:
+        gdp_median = cl7["gdp"].median()
+        life_median = cl7["life_eval"].median()
+
+        high_life_low_gdp = (
+            cl7[(cl7["gdp"] < gdp_median) & (cl7["life_eval"] > life_median)]
+              .sort_values("life_eval", ascending=False)
+              .copy()
+        )
+
+        if high_life_low_gdp.empty:
+            st.info("No countries fall into the 'high life eval & low GDP' quadrant under current filters.")
+        else:
+            fig7 = px.bar(
+                high_life_low_gdp,
+                x="life_eval",
+                y="Country name",
+                orientation="h",
+                title="Countries with high life evaluation despite low GDP (averages)",
+                labels={"life_eval": "Avg life evaluation", "Country name": "Country"}
+            )
+            fig7.update_layout(template="plotly_white", yaxis=dict(categoryorder="total ascending"))
+            st.plotly_chart(fig7, use_container_width=True)
+
+    st.divider()
+
+    # =========================
+    # P8: Factor profile (High vs Low life evaluation)
+    # =========================
+    st.markdown("### P8. Factor profile: High vs Low life evaluation countries")
+
+    needed = [
+        "Country name",
+        "Life evaluation (3-year average)",
+        "Explained by: Log GDP per capita",
+        "Explained by: Social support",
+        "Explained by: Healthy life expectancy",
+        "Explained by: Freedom to make life choices",
+        "Explained by: Generosity",
+        "Explained by: Perceptions of corruption",
+    ]
+    missing = [c for c in needed if c not in df_f.columns]
+    if missing:
+        st.warning("Skipping P8 (missing columns): " + ", ".join(missing))
+    else:
+        cl8 = (
+            df_f.groupby("Country name", as_index=False)
+                .agg({
+                    "Life evaluation (3-year average)": "mean",
+                    "Explained by: Log GDP per capita": "mean",
+                    "Explained by: Social support": "mean",
+                    "Explained by: Healthy life expectancy": "mean",
+                    "Explained by: Freedom to make life choices": "mean",
+                    "Explained by: Generosity": "mean",
+                    "Explained by: Perceptions of corruption": "mean",
+                })
+                .rename(columns={
+                    "Life evaluation (3-year average)": "life_eval",
+                    "Explained by: Log GDP per capita": "gdp",
+                    "Explained by: Social support": "social_support",
+                    "Explained by: Healthy life expectancy": "healthy_life",
+                    "Explained by: Freedom to make life choices": "freedom",
+                    "Explained by: Generosity": "generosity",
+                    "Explained by: Perceptions of corruption": "corruption",
+                })
+        )
+
+        for c in ["life_eval", "gdp", "social_support", "healthy_life", "freedom", "generosity", "corruption"]:
+            cl8[c] = pd.to_numeric(cl8[c], errors="coerce")
+
+        cl8 = cl8.dropna(subset=["life_eval"])
+
+        if cl8.empty:
+            st.warning("No data available for P8 with the current filters.")
+        else:
+            life_median = cl8["life_eval"].median()
+            cl8["Life group"] = cl8["life_eval"].apply(
+                lambda x: "High life evaluation" if x >= life_median else "Low life evaluation"
+            )
+
+            group_means = (
+                cl8.groupby("Life group", as_index=False)[
+                    ["gdp", "social_support", "healthy_life", "freedom", "generosity", "corruption"]
+                ].mean()
+            )
+
+            long_group = group_means.melt(
+                id_vars="Life group",
+                var_name="Factor",
+                value_name="Average factor value"
+            )
+
+            # Etiquetas bonitas
+            long_group["Factor"] = long_group["Factor"].replace({
+                "gdp": "GDP per capita",
+                "social_support": "Social support",
+                "healthy_life": "Healthy life expectancy",
+                "freedom": "Freedom",
+                "generosity": "Generosity",
+                "corruption": "Corruption",
+            })
+
+            fig8 = px.bar(
+                long_group,
+                x="Factor",
+                y="Average factor value",
+                color="Life group",
+                barmode="group",
+                title="Average factor values by life evaluation group (country averages)"
+            )
+            fig8.update_layout(template="plotly_white", xaxis_tickangle=-25)
+            st.plotly_chart(fig8, use_container_width=True)
+
+    st.divider()
+
+    # =========================
+    # P9: Evolution of factors over time (global yearly averages)
+    # =========================
+    st.markdown("### P9. How do happiness factors evolve over time? (global averages)")
+
+    factors = [
+        "Explained by: Log GDP per capita",
+        "Explained by: Social support",
+        "Explained by: Healthy life expectancy",
+        "Explained by: Freedom to make life choices",
+        "Explained by: Generosity",
+        "Explained by: Perceptions of corruption"
+    ]
+    missing_f = [c for c in factors if c not in df_f.columns]
+    if missing_f:
+        st.warning("Skipping P9 (missing columns): " + ", ".join(missing_f))
+    else:
+        yearly = df_f.groupby("Year", as_index=False)[factors].mean()
+        long_yearly = yearly.melt(id_vars="Year", var_name="Factor", value_name="Avg contribution")
+
+        long_yearly["Factor"] = long_yearly["Factor"].replace({
+            "Explained by: Log GDP per capita": "GDP per capita",
+            "Explained by: Social support": "Social support",
+            "Explained by: Healthy life expectancy": "Healthy life expectancy",
+            "Explained by: Freedom to make life choices": "Freedom",
+            "Explained by: Generosity": "Generosity",
+            "Explained by: Perceptions of corruption": "Corruption"
+        })
+
+        fig9 = px.line(
+            long_yearly,
+            x="Year",
+            y="Avg contribution",
+            color="Factor",
+            markers=True,
+            title="Evolution of happiness factors (global yearly averages)",
+            labels={"Avg contribution": "Average factor value"}
+        )
+        fig9.update_layout(template="plotly_white", legend_title_text="Factor")
+        st.plotly_chart(fig9, use_container_width=True)
+
