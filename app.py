@@ -34,8 +34,8 @@ selected_countries = st.sidebar.multiselect(
 
 st.sidebar.header("Chart settings")
 
-top_n = st.sidebar.slider("Top N (rankings)", min_value=5, max_value=30, value=15, step=5)
-change_n = st.sidebar.slider("Top N (changes 2019→2024)", min_value=5, max_value=30, value=15, step=5)
+top_n = st.sidebar.slider("Top N (rankings)", min_value=5, max_value=25, value=15, step=5)
+change_n = st.sidebar.slider("Top N (changes 2019→2024)", min_value=5, max_value=25, value=15, step=5)
 
 # Para gráficos que comparan países en líneas (evitar spaghetti)
 max_countries = st.sidebar.slider("Max countries to show (line charts)", 3, 15, 8, 1)
@@ -78,7 +78,7 @@ with tab1:
 
     fig1 = px.line(
         plot_df, x="Year", y="life_eval", color="Country name", markers=True,
-        title="Life Evaluation Over Time (Global + Selected Countries)",
+        title="Life evaluation over time (Global + Selected Countries)",
         labels={"life_eval": "Life evaluation (3-year average)", "Country name": "Series"}
     )
 
@@ -118,7 +118,7 @@ with tab2:
         y="Country name",
         color="Group",
         orientation="h",
-        title=f"Top and Bottom {top_n} Countries by Average Life Evaluation",
+        title=f"Top and bottom {top_n} countries by average life evaluation",
         labels={"avg_life_eval": "Average life evaluation", "Country name": "Country"}
     )
 
@@ -158,7 +158,7 @@ with tab3:
         plot_change,
         y="Country name",
         x="Life evaluation (3-year average)_2019",
-        title=f"Changes in Life Evaluation (2019 → 2024): Top {change_n} increases & decreases",
+        title=f"Changes in life evaluation (2019 → 2024): Top {change_n} increases & decreases",
         labels={"Life evaluation (3-year average)_2019": "Life evaluation"},
     )
 
@@ -238,7 +238,7 @@ with tab4:
         st.stop()
 
     # ---------- P4: GDP vs Life Evaluation ----------
-    st.markdown("**P4. Relationship: GDP per capita vs Life Evaluation (country averages)**")
+    st.markdown("**P4. Relationship: GDP per capita vs life evaluation (country averages)**")
 
     fig4 = px.scatter(
         country_full.dropna(subset=["gdp"]),
@@ -246,14 +246,14 @@ with tab4:
         y="life_eval",
         hover_name="Country name",
         opacity=0.7,
-        title="GDP per capita vs Life Evaluation (Country Averages)",
+        title="GDP per capita vs life evaluation (country averages)",
         labels={"gdp": "Avg Log GDP per capita", "life_eval": "Avg Life evaluation"}
     )
     fig4.update_layout(template="plotly_white")
     st.plotly_chart(fig4, use_container_width=True)
 
     # ---------- P6: Facets (GDP vs Social support) ----------
-    st.markdown("**P6. Compare associations: GDP vs Social Support (faceted)**")
+    st.markdown("**P6. Compare associations: GDP vs social support (faceted)**")
 
     long_df = country_full.melt(
         id_vars=["Country name", "life_eval"],
@@ -274,7 +274,7 @@ with tab4:
         facet_col="Factor",
         hover_name="Country name",
         opacity=0.7,
-        title="Life Evaluation vs Key Factors (Country Averages)",
+        title="Life Evaluation vs key factors (Country averages)",
         labels={"life_eval": "Avg Life evaluation", "Factor value": "Factor value"}
     )
     fig6.update_layout(template="plotly_white")
@@ -310,7 +310,7 @@ with tab4:
         x="Correlation",
         y="Factor",
         orientation="h",
-        title="Correlation with Life Evaluation (Country Averages)",
+        title="Correlation with life evaluation (Country averages)",
         labels={"Correlation": "Pearson correlation", "Factor": "Factor"}
     )
     fig5.update_layout(template="plotly_white", yaxis=dict(categoryorder="total ascending"))
@@ -325,8 +325,8 @@ with tab5:
     # =========================
     # P7: High life evaluation despite low GDP (bar)
     # =========================
-    st.markdown("### P7. High life evaluation despite low GDP (country averages)")
-
+    st.subheader("P7. High life evaluation despite low GDP (country averages)")
+    
     # Country-level averages for life_eval and GDP
     cl7 = (
         df_f.groupby("Country name", as_index=False)
@@ -375,7 +375,7 @@ with tab5:
     # =========================
     # P8: Factor profile (High vs Low life evaluation)
     # =========================
-    st.markdown("### P8. Factor profile: High vs Low life evaluation countries")
+    st.subheader("P8. Factor profile: High vs Low life evaluation countries")
 
     needed = [
         "Country name",
@@ -464,7 +464,7 @@ with tab5:
     # =========================
     # P9: Evolution of factors over time (global yearly averages)
     # =========================
-    st.markdown("### P9. How do happiness factors evolve over time? (global averages)")
+    st.subheader("P9. How do happiness factors evolve over time? (global averages)")
 
     factors = [
         "Explained by: Log GDP per capita",
@@ -525,7 +525,7 @@ with tab6:
         locationmode="country names",
         color="avg_life_eval",
         color_continuous_scale="Turbo",  # llamativo
-        title="Global Distribution of Life Evaluation (selected years)",
+        title="Global distribution of life evaluation (selected years)",
         labels={"avg_life_eval": "Average life evaluation"}
     )
 
@@ -550,4 +550,5 @@ with tab6:
     )
 
     st.plotly_chart(figm, use_container_width=True)
+
 
