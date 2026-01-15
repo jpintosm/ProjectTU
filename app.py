@@ -183,3 +183,138 @@ with tab3:
     fig3.update_layout(template="plotly_white", xaxis_title="Life evaluation", yaxis_title="Country")
     st.plotly_chart(fig3, use_container_width=True)
 
+
+with tab4:
+    st.subheader("Drivers of happiness (GDP, Social Support, and factor strength)")
+
+    required_cols = [
+        "Country name",
+        "Life evaluation (3-year average)",
+        "Explained by: Log GDP per capita",
+        "Explained by: Social support",
+        "Explained by: Healthy life expectancy",
+        "Explained by: Freedom to make life choices",
+        "Explained by: Generosity",
+        "Explained by: Perceptions of corruption",
+    ]
+
+    missing = [c for c in required_cols if c not in df_f.columns]
+    if missing:
+        st.error("Missing columns in the dataset: " + ", ".join(missing))
+        st.stop()
+
+    # --- Country-level averages (2019–2024 within current filter) ---
+    country_full = (
+        df_f.groupby("Country name", as_index=False)
+            .agg({
+                "Life evaluation (3-year average)": "mean",
+                "Explained by: Log GDP per capita": "mean",
+                "Explained by: Social support": "mean",
+                "Explained by: Healthy life expectancy": "mean",
+                "Explained by: Freedom to make life choices": "mean",
+                "Explained by: Generosity": "mean",
+                "Explained by: Perceptions of corruption": "mean",
+            })
+            .rename(columns={
+                "Life evaluation (3-year average)": "life_eval",
+                "Explained by: Log GDP per capita": "gdp",
+                "Explained by: Social support": "social_support",
+                "Explained by: Healthy life expectancy": "healthy_life",
+                "Explained by: Freedom to make life choices": "freedom",
+                "Explained by: Generosity": "generosity",
+                "Explained by: Perceptions of corruption": "corruption",
+            })
+    )
+
+    # Convertir a numérico por seguridad
+    num_cols = ["life_eval", "gdp", "social_support", "healthy_life", "freedom", "generosity", "corruption"]
+    for c in num_cols:
+        country_full[c] = pd.to_numeric(country_full[c], errors="coerce")
+
+    country_full = country_full.dropna(subset=["life_eval"])  # mínimo indispensable
+
+    if country_full.empty:
+        st.warning("No data available for the current filters.")
+        st.stop()
+
+    # ---------- P4: GDP vs Life Evaluation ----------
+    st.markdown("**P4. Relationship: GDP per capita vs Life Evaluation (country averages)**")
+
+    fig4 = px.scatter(
+        country_full.dropna(subset=["gdp"]),
+        x="gdp",
+        y="life_eval",
+        hover_name="Country name",
+        opacity=0.7,
+        title="GDP per capita vs Life Evaluation (Country Averages)",
+        labels={"gdp": "Avg Log GDP per capita", "life_eval": "Avg Life evaluation"}
+    )
+    fig4.update_layout(template="plotly_white")
+    st.plotly_chart(fig4, use_container_width=True)
+
+    # ---------- P6: Facets (GDP vs Social support) ----------
+    st.markdown("**P6. Compare associations: GDP vs Social Support (faceted)**")
+
+    long_df = country_full.melt(
+        id_vars=["Country name", "life_eval"],
+        value_vars=["gdp", "social_support"],
+        var_name="Factor",
+        value_name="Factor value"
+    )
+
+    long_df["Factor"] = long_df["Factor"].replace({
+        "gdp": "Log GDP per capita",
+        "social_support": "Social support"
+    })
+
+    fig6 = px.scatter(
+        long_df.dropna(subset=["Factor value"]),
+        x="Factor value",
+        y="life_eval",
+        facet_col="Factor",
+        hover_name="Country name",
+        opacity=0.7,
+        title="Life Evaluation vs Key Factors (Country Averages)",
+        labels={"life_eval": "Avg Life evaluation", "Factor value": "Factor value"}
+    )
+    fig6.update_layout(template="plotly_white")
+    st.plotly_chart(fig6, use_container_width=True)
+
+    # ---------- P5: Correlation ranking ----------
+    st.markdown("**P5. Which factor correlates most with life evaluation?**")
+
+    factors_cols = ["gdp", "social_support", "healthy_life", "freedom", "generosity", "corruption"]
+
+    corr_rows = []
+    for f in factors_cols:
+        tmp = country_full[[f, "life_eval"]].dropna()
+        if len(tmp) < 3:
+            corr = None
+        else:
+            corr = tmp[f].corr(tmp["life_eval"])
+        corr_rows.append({"Factor": f, "Correlation": corr})
+
+    corr_df = pd.DataFrame(corr_rows).dropna().sort_values("Correlation", ascending=False)
+
+    corr_df["Factor"] = corr_df["Factor"].replace({
+        "gdp": "GDP per capita",
+        "social_support": "Social support",
+        "healthy_life": "Healthy life expectancy",
+        "freedom": "Freedom",
+        "generosity": "Generosity",
+        "corruption": "Corruption",
+    })
+
+    fig5 = px.bar(
+        corr_df,
+        x="Correlation",
+        y="Factor",
+        orientation="h",
+        title="Correlation with Life Evaluation (Country Averages)",
+        labels={"Correlation": "Pearson correlation", "Factor": "Factor"}
+    )
+    fig5.update_layout(template="plotly_white", yaxis=dict(categoryorder="total ascending"))
+    st.plotly_chart(fig5, use_container_width=True)
+
+    st.caption("Note: Correlation indicates association, not causation.")
+
