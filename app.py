@@ -52,7 +52,7 @@ col3.metric("Rows", len(df_f))
 st.divider()
 
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-    "Overview", "Rankings", "Changes", "Drivers", "Groups", "Map"
+    "Map", "Overview", "Rankings", "Changes", "Drivers", "Groups"
 ])
 
 with tab1:
@@ -550,3 +550,4 @@ with tab6:
         )
         fig9.update_layout(template="plotly_white", legend_title_text="Factor")
         st.plotly_chart(fig9, use_container_width=True)
+
