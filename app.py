@@ -10,7 +10,7 @@ def load_data():
 
 df = load_data()
 
-st.title("World happiness (2019–2024) dashboard")
+st.title("World happiness dashboard")
 
 # ----- Sidebar filters -----
 st.sidebar.header("Filters")
@@ -553,6 +553,7 @@ with tab6:
         )
         fig9.update_layout(template="plotly_white", legend_title_text="Factor")
         st.plotly_chart(fig9, use_container_width=True)
+
 
 
 
