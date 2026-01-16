@@ -46,7 +46,6 @@ if len(selected_countries) > max_countries:
 # ----- KPI row -----
 col1, col2, col3 = st.columns(3)
 col1.metric("Countries", df_f["Country name"].nunique())
-col2.metric("Years", df_f["Year"].nunique())
 col3.metric("Rows", len(df_f))
 
 st.divider()
@@ -550,4 +549,5 @@ with tab6:
         )
         fig9.update_layout(template="plotly_white", legend_title_text="Factor")
         st.plotly_chart(fig9, use_container_width=True)
+
 
