@@ -241,44 +241,24 @@ with tab4:
     st.markdown("**P4. Relationship: GDP per capita vs life evaluation (country averages)**")
 
     fig4 = px.scatter(
-        country_full.dropna(subset=["gdp"]),
+        country_full.dropna(subset=["gdp", "life_eval"]),
         x="gdp",
         y="life_eval",
         hover_name="Country name",
         opacity=0.7,
-        title="GDP per capita vs life evaluation (country averages)",
-        labels={"gdp": "Avg Log GDP per capita", "life_eval": "Avg Life evaluation"}
+        trendline="lowess",
+        title="GDP per capita vs Life Evaluation (Country Averages)",
+        labels={
+            "gdp": "Avg Log GDP per capita",
+            "life_eval": "Avg Life evaluation"
+        }
     )
+    
     fig4.update_layout(template="plotly_white")
     st.plotly_chart(fig4, use_container_width=True)
 
-    # ---------- P6: Facets (GDP vs Social support) ----------
-    st.markdown("**P6. Compare associations: GDP vs social support (faceted)**")
-
-    long_df = country_full.melt(
-        id_vars=["Country name", "life_eval"],
-        value_vars=["gdp", "social_support"],
-        var_name="Factor",
-        value_name="Factor value"
-    )
-
-    long_df["Factor"] = long_df["Factor"].replace({
-        "gdp": "Log GDP per capita",
-        "social_support": "Social support"
-    })
-
-    fig6 = px.scatter(
-        long_df.dropna(subset=["Factor value"]),
-        x="Factor value",
-        y="life_eval",
-        facet_col="Factor",
-        hover_name="Country name",
-        opacity=0.7,
-        title="Life Evaluation vs key factors (Country averages)",
-        labels={"life_eval": "Avg Life evaluation", "Factor value": "Factor value"}
-    )
-    fig6.update_layout(template="plotly_white")
-    st.plotly_chart(fig6, use_container_width=True)
+    fig4.update_layout(template="plotly_white")
+    st.plotly_chart(fig4, use_container_width=True)
 
     # ---------- P5: Correlation ranking ----------
     st.markdown("**P5. Which factor correlates most with life evaluation?**")
@@ -318,6 +298,42 @@ with tab4:
 
     st.caption("Note: Correlation indicates association, not causation.")
 
+
+    # ---------- P6: Facets (GDP vs Social support) ----------
+    st.markdown("**P6. Compare associations: GDP vs social support (faceted)**")
+
+    long_df = country_full.melt(
+        id_vars=["Country name", "life_eval"],
+        value_vars=["gdp", "social_support"],
+        var_name="Factor",
+        value_name="Factor value"
+    )
+
+    long_df["Factor"] = long_df["Factor"].replace({
+        "gdp": "Log GDP per capita",
+        "social_support": "Social support"
+    })
+
+    fig6 = px.scatter(
+        long_df.dropna(subset=["Factor value", "life_eval"]),
+        x="Factor value",
+        y="life_eval",
+        facet_col="Factor",
+        trendline="lowess",
+        hover_name="Country name",
+        opacity=0.7,
+        title="Life Evaluation vs Key Factors (Country Averages)",
+        labels={
+            "life_eval": "Avg Life evaluation",
+            "Factor value": "Factor value"
+        }
+    )
+    
+    fig6.update_layout(template="plotly_white")
+    st.plotly_chart(fig6, use_container_width=True)
+
+    fig6.update_layout(template="plotly_white")
+    st.plotly_chart(fig6, use_container_width=True)
 
 with tab5:
     st.subheader("Groups & profiles")
@@ -550,5 +566,6 @@ with tab6:
     )
 
     st.plotly_chart(figm, use_container_width=True)
+
 
 
