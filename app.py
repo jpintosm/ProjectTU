@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-st.set_page_config(page_title="World Happiness Dashboard", layout="wide")
+st.set_page_config(page_title="World happiness dashboard", layout="wide")
 
 @st.cache_data
 def load_data():
@@ -10,7 +10,7 @@ def load_data():
 
 df = load_data()
 
-st.title("World Happiness (2019–2024) Dashboard")
+st.title("World happiness (2019–2024) dashboard")
 
 # ----- Sidebar filters -----
 st.sidebar.header("Filters")
@@ -55,9 +55,58 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "Overview", "Rankings", "Changes", "Drivers", "Groups", "Map"
 ])
 
-# ----- Chart 1: Global + selected countries -----
 with tab1:
-    st.subheader("P1. Global trend of life evaluation (with optional country comparison)")
+    st.subheader("Map")
+
+    # Promedio por país dentro del rango seleccionado
+    map_df = (
+        df_f.groupby("Country name", as_index=False)["Life evaluation (3-year average)"]
+            .mean()
+            .rename(columns={"Life evaluation (3-year average)": "avg_life_eval"})
+    )
+
+    map_df["avg_life_eval"] = pd.to_numeric(map_df["avg_life_eval"], errors="coerce")
+    map_df = map_df.dropna(subset=["avg_life_eval"])
+
+    if map_df.empty:
+        st.warning("No data available for the map with the current filters.")
+        st.stop()
+
+    figm = px.choropleth(
+        map_df,
+        locations="Country name",
+        locationmode="country names",
+        color="avg_life_eval",
+        color_continuous_scale="Turbo",  # llamativo
+        title="Global Distribution of Life Evaluation (selected years)",
+        labels={"avg_life_eval": "Average life evaluation"}
+    )
+
+    vmin = float(map_df["avg_life_eval"].min())
+    vmax = float(map_df["avg_life_eval"].max())
+    tickvals = [round(vmin + i*(vmax - vmin)/4, 1) for i in range(5)]
+
+    figm.update_coloraxes(
+        cmin=vmin, cmax=vmax,
+        colorbar=dict(
+            title="Average life evaluation<br>(selected years)",
+            tickmode="array",
+            tickvals=tickvals,
+            ticks="outside",
+            len=0.6
+        )
+    )
+
+    figm.update_layout(
+        template="simple_white",
+        margin=dict(l=0, r=0, t=50, b=0)
+    )
+
+    st.plotly_chart(figm, use_container_width=True)
+    
+# ----- Chart 1: Global + selected countries -----
+with tab2:
+    st.subheader("Global trend of life evaluation")
 
     global_series = (
         df_f.groupby("Year", as_index=False)["Life evaluation (3-year average)"]
@@ -96,8 +145,8 @@ with tab1:
     st.plotly_chart(fig1, use_container_width=True)
 
 
-with tab2:
-    st.subheader("P2. Differences between countries (Top vs Bottom)")
+with tab3:
+    st.subheader("Differences between countries (Top vs Bottom)")
 
     country_avg = (
         df_f.groupby("Country name", as_index=False)["Life evaluation (3-year average)"]
@@ -125,8 +174,8 @@ with tab2:
     fig2.update_layout(template="plotly_white", yaxis=dict(categoryorder="total ascending"))
     st.plotly_chart(fig2, use_container_width=True)
 
-with tab3:
-    st.subheader("P3. Biggest changes from 2019 to 2024 (increase vs decrease)")
+with tab4:
+    st.subheader("Biggest changes from 2019 to 2024 (increase vs decrease)")
 
     # Verificar que existan ambos años en el df filtrado
     years_available = set(df_f["Year"].unique())
@@ -158,7 +207,7 @@ with tab3:
         plot_change,
         y="Country name",
         x="Life evaluation (3-year average)_2019",
-        title=f"Changes in Life Evaluation (2019 → 2024): Top {change_n} increases & decreases",
+        title=f"Changes in life evaluation (2019 → 2024): Top {change_n} increases & decreases",
         labels={"Life evaluation (3-year average)_2019": "Life evaluation"},
     )
 
@@ -184,7 +233,7 @@ with tab3:
     st.plotly_chart(fig3, use_container_width=True)
 
 
-with tab4:
+with tab5:
     st.subheader("Drivers of happiness (GDP, Social Support, and factor strength)")
 
     required_cols = [
@@ -238,7 +287,7 @@ with tab4:
         st.stop()
 
     # ---------- P4: GDP vs Life Evaluation ----------
-    st.markdown("**P4. Relationship: GDP per capita vs Life Evaluation (country averages)**")
+    st.subheader("Relationship: GDP per capita vs Life Evaluation (country averages))")
 
     fig4 = px.scatter(
         country_full.dropna(subset=["gdp"]),
@@ -253,8 +302,8 @@ with tab4:
     st.plotly_chart(fig4, use_container_width=True)
 
     # ---------- P6: Facets (GDP vs Social support) ----------
-    st.markdown("**P6. Compare associations: GDP vs Social Support (faceted)**")
-
+    st.subheader("Compare associations: GDP vs Social Support (faceted)")
+    
     long_df = country_full.melt(
         id_vars=["Country name", "life_eval"],
         value_vars=["gdp", "social_support"],
@@ -281,7 +330,7 @@ with tab4:
     st.plotly_chart(fig6, use_container_width=True)
 
     # ---------- P5: Correlation ranking ----------
-    st.markdown("**P5. Which factor correlates most with life evaluation?**")
+    st.subheader("Which factor correlates most with life evaluation?")
 
     factors_cols = ["gdp", "social_support", "healthy_life", "freedom", "generosity", "corruption"]
 
@@ -319,13 +368,13 @@ with tab4:
     st.caption("Note: Correlation indicates association, not causation.")
 
 
-with tab5:
+with tab6:
     st.subheader("Groups & profiles")
 
     # =========================
     # P7: High life evaluation despite low GDP (bar)
     # =========================
-    st.markdown("### P7. High life evaluation despite low GDP (country averages)")
+    st.subheader("High life evaluation despite low GDP (country averages)")
 
     # Country-level averages for life_eval and GDP
     cl7 = (
@@ -375,7 +424,7 @@ with tab5:
     # =========================
     # P8: Factor profile (High vs Low life evaluation)
     # =========================
-    st.markdown("### P8. Factor profile: High vs Low life evaluation countries")
+    st.subheader("Factor profile: High vs Low life evaluation countries)")
 
     needed = [
         "Country name",
@@ -464,7 +513,7 @@ with tab5:
     # =========================
     # P9: Evolution of factors over time (global yearly averages)
     # =========================
-    st.markdown("### P9. How do happiness factors evolve over time? (global averages)")
+    st.subheader("How do happiness factors evolve over time? (global averages)")
 
     factors = [
         "Explained by: Log GDP per capita",
@@ -501,53 +550,3 @@ with tab5:
         )
         fig9.update_layout(template="plotly_white", legend_title_text="Factor")
         st.plotly_chart(fig9, use_container_width=True)
-
-with tab6:
-    st.subheader("Map")
-
-    # Promedio por país dentro del rango seleccionado
-    map_df = (
-        df_f.groupby("Country name", as_index=False)["Life evaluation (3-year average)"]
-            .mean()
-            .rename(columns={"Life evaluation (3-year average)": "avg_life_eval"})
-    )
-
-    map_df["avg_life_eval"] = pd.to_numeric(map_df["avg_life_eval"], errors="coerce")
-    map_df = map_df.dropna(subset=["avg_life_eval"])
-
-    if map_df.empty:
-        st.warning("No data available for the map with the current filters.")
-        st.stop()
-
-    figm = px.choropleth(
-        map_df,
-        locations="Country name",
-        locationmode="country names",
-        color="avg_life_eval",
-        color_continuous_scale="Turbo",  # llamativo
-        title="Global Distribution of Life Evaluation (selected years)",
-        labels={"avg_life_eval": "Average life evaluation"}
-    )
-
-    vmin = float(map_df["avg_life_eval"].min())
-    vmax = float(map_df["avg_life_eval"].max())
-    tickvals = [round(vmin + i*(vmax - vmin)/4, 1) for i in range(5)]
-
-    figm.update_coloraxes(
-        cmin=vmin, cmax=vmax,
-        colorbar=dict(
-            title="Average life evaluation<br>(selected years)",
-            tickmode="array",
-            tickvals=tickvals,
-            ticks="outside",
-            len=0.6
-        )
-    )
-
-    figm.update_layout(
-        template="simple_white",
-        margin=dict(l=0, r=0, t=50, b=0)
-    )
-
-    st.plotly_chart(figm, use_container_width=True)
-
