@@ -289,7 +289,7 @@ with tab5:
         st.stop()
 
     # ---------- P4: GDP vs Life Evaluation ----------
-    st.subheader("Relationship: GDP per capita vs Life Evaluation (country averages))")
+    st.subheader("Relationship: GDP per capita vs Life Evaluation (country averages)")
 
     fig4 = px.scatter(
         country_full.dropna(subset=["gdp"]),
@@ -426,7 +426,7 @@ with tab6:
     # =========================
     # P8: Factor profile (High vs Low life evaluation)
     # =========================
-    st.subheader("Factor profile: High vs Low life evaluation countries)")
+    st.subheader("Factor profile: High vs Low life evaluation countries")
 
     needed = [
         "Country name",
@@ -552,6 +552,7 @@ with tab6:
         )
         fig9.update_layout(template="plotly_white", legend_title_text="Factor")
         st.plotly_chart(fig9, use_container_width=True)
+
 
 
 
