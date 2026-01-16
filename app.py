@@ -206,9 +206,12 @@ with tab4:
         plot_change,
         y="Country name",
         x="Life evaluation (3-year average)_2019",
-        title=f"Changes in life evaluation (2019 → 2024): Top {change_n} increases & decreases",
-        labels={"Life evaluation (3-year average)_2019": "Life evaluation"},
+        title=f"Changes in Life Evaluation (2019 → 2024): Top {change_n} increases & decreases",
+        labels={"Life evaluation (3-year average)_2019": "Life evaluation"}
     )
+    
+    fig3.update_traces(name="2019", showlegend=True)
+
 
     fig3.add_scatter(
         y=plot_change["Country name"],
@@ -549,5 +552,6 @@ with tab6:
         )
         fig9.update_layout(template="plotly_white", legend_title_text="Factor")
         st.plotly_chart(fig9, use_container_width=True)
+
 
 
